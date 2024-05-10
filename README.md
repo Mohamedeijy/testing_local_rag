@@ -1,1 +1,1 @@
-# testing_local_rag
+## Testing out local RAG use for 'talking with your documents' prototype
