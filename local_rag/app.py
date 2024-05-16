@@ -24,8 +24,8 @@ def main():
 
     @chain
     def custom_chain(text):
-        inputs = {"query": f"{text}", "num_steps": 0}
-        return graph.invoke(inputs)
+        inputs = {"query": f"{text}"}
+        return graph.invoke(inputs)["answer"]
 
     app = FastAPI(
         title="Local Assistant",
@@ -35,7 +35,9 @@ def main():
 
     add_routes(
         app,
-        custom_chain.with_types(input_type=str),
+        custom_chain.with_types(input_type=dict,output_type=str),
+        # custom_chain.with_types(input_type=str,output_type=str), # endpoint type change for default playground
+        # graph.with_types(input_type=str),
         path="/local_assistant",
         playground_type="chat",
         # enable_feedback_endpoint=True,

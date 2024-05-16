@@ -11,7 +11,7 @@ def get_model() -> BaseLLM:
                   )
 
 
-def get_retriever(embed_model: Embeddings, top_k: int = 4) -> VectorStoreRetriever:
+def get_retriever(embed_model: Embeddings, top_k: int = 5) -> VectorStoreRetriever:
     index_name: str = "markdown-notes"
     vectorstore = PineconeVectorStore(
         index_name=index_name,

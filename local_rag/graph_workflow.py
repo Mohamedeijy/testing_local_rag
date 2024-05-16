@@ -21,14 +21,12 @@ class GraphState(TypedDict):
         documents: retrieved documents from our rag and the internet
         web_search_needed: whether we need a websearch or not
         answer_grade: whether the final answer was judged relevant by our grader, True if yes
-        num_steps: number of steps
 
     """
     query: str
     answer: str
     documents: List[str]
     relevant_answer: bool
-    num_steps: int
 
 
 def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: Embeddings) -> StateGraph:
@@ -52,8 +50,7 @@ def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: E
     rag_template = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
     You are a virtual assistant strictly designed to provide knowledge based on provided context from a database of documents.
     Answer the question based on the context below.
-    If you have evaluated that the given context cannot help you provide a related answer, reply 'I don't know' and absolutely nothing else.
-    Don't be too verbose with your answers.<|eot_id|>
+    If you have evaluated that the given context cannot help you provide a related answer, reply 'I don't know' and absolutely nothing else.<|eot_id|>
     
     <|start_header_id|>user<|end_header_id|>
     Query: '{query}'
@@ -98,7 +95,7 @@ def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: E
         query = state["query"]
 
         documents: list[langchain_core.documents.Document] = retriever.invoke(query)
-        return {"query": query, "documents": documents, "num_steps": int(state["num_steps"]) + 1}
+        return {"query": query, "documents": documents}
 
     def web_search(state: dict) -> dict:
         """
@@ -117,7 +114,7 @@ def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: E
         else:
             documents.extend(web_results)
 
-        return {"query": query, "documents": documents, "num_steps": int(state["num_steps"]) + 1}
+        return {"query": query, "documents": documents}
 
     def generate_answer(state: dict) -> dict:
         """
@@ -132,9 +129,9 @@ def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: E
 
         answer = rag.invoke(input={"query": query, "context": documents})
 
-        return {"query": query, "documents": documents, "answer": answer, "num_steps": int(state["num_steps"]) + 1}
+        return {"query": query, "documents": documents, "answer": answer}
 
-    def grade_answer(state: dict):# -> dict:
+    def grade_answer(state: dict) -> dict:
         """
         Call LLM to determine if answer is relevant to context or no.
 
@@ -158,9 +155,8 @@ def get_workflow(model: BaseLLM, retriever: VectorStoreRetriever, embed_model: E
         \n ------- \n
         Was this answer judged relevant ? : {grade['relevant_answer']}
         """)
-        # return {"query": query, "documents": documents, "answer": answer, "relevant_answer": relevant_answer,
-        #         "num_steps": int(state["num_steps"]) + 1}
-        return query
+        return {"query": query, "documents": documents, "answer": answer, "relevant_answer": relevant_answer}
+        # return query
 
     # ---- CONDITIONAL EDGES ---- #
     def route_to_research_or_rag(state: dict) -> str:
